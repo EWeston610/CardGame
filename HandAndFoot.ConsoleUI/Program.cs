@@ -3,9 +3,9 @@ using HandAndFoot.Logic;
 
 namespace HandAndFoot;
 
-    class Program
+    class ConsoleUI
     {
-        static void ClassNameForTestingStuff()
+        static void Main()
         {
             DrawDeck drawDeck = new DrawDeck();
             List<Card> playerHand = drawDeck.DrawCards(11);

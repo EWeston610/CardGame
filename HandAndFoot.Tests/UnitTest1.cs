@@ -14,7 +14,7 @@ public class Tests
         Assert.Pass();
     }
      [Test]
-        public void ValidateMeld_WithLessThanThreeCards_ReturnsFalse()
+        public void MeldWithLessThanThreeCards()
         {
             Meld meld = new Meld("TeamA");
             meld.AddCard(new Card(Suit.Spades, Rank.Ace));
@@ -24,7 +24,7 @@ public class Tests
 
         // Test that a meld with three natural cards is valid.
         [Test]
-        public void ValidateMeld_WithThreeNaturalCards_ReturnsTrue()
+        public void MeldWithThreeCards()
         {
             Meld meld = new Meld("TeamA");
             meld.AddCard(new Card(Suit.Spades, Rank.Ace));
@@ -35,7 +35,7 @@ public class Tests
 
         // Test that a meld containing wild cards but with less than four natural cards is invalid.
         [Test]
-        public void ValidateMeld_WithWildCard_ButLessThanFourNaturalCards_ReturnsFalse()
+        public void WildCardTesting()
         {
             Meld meld = new Meld("TeamA");
             meld.AddCard(new Card(Suit.Spades, Rank.Ace));   
@@ -46,7 +46,7 @@ public class Tests
 
         // Test that a meld containing wild cards with at least four natural cards is valid.
         [Test]
-        public void ValidateMeld_WithWildCardAndAtLeastFourNaturalCards_ReturnsTrue()
+        public void WildCardTesting2()
         {
             Meld meld = new Meld("TeamA");
             meld.AddCard(new Card(Suit.Spades, Rank.Ace));
@@ -59,7 +59,7 @@ public class Tests
 
         // Test that adding a card of rank Three throws an exception.
         [Test]
-        public void AddCard_DisallowsRankThree_ThrowsException()
+        public void CannotCreateMeldsWithRankThreeTest()
         {
             Meld meld = new Meld("TeamA");
             var ex = Assert.Throws<InvalidOperationException>(() =>
@@ -71,7 +71,7 @@ public class Tests
 
         // Test that adding a natural card with a rank different from the established meld rank throws an exception.
         [Test]
-        public void AddCard_MismatchedNaturalCard_ThrowsException()
+        public void CannotMixRanksTest()
         {
             Meld meld = new Meld("TeamA");
             meld.AddCard(new Card(Suit.Spades, Rank.Ace));
@@ -106,7 +106,7 @@ public class Tests
 
         // Test that the meld is closed when there are seven cards
         [Test]
-        public void IsClosed_WhenSevenCards_ReturnsTrue()
+        public void ClosesAfter7CardsTest()
         {
             Meld meld = new Meld("TeamA");
             meld.AddCard(new Card(Suit.Spades, Rank.Ace));
