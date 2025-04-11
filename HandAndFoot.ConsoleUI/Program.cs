@@ -5,7 +5,7 @@ namespace HandAndFoot;
 
     class Program
     {
-        static void TupleThingyForTesting(string[] args)
+        static void ClassNameForTestingStuff()
         {
             DrawDeck drawDeck = new DrawDeck();
             List<Card> playerHand = drawDeck.DrawCards(11);
