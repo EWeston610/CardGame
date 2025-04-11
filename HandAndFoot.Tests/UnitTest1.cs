@@ -38,9 +38,9 @@ public class Tests
         public void ValidateMeld_WithWildCard_ButLessThanFourNaturalCards_ReturnsFalse()
         {
             Meld meld = new Meld("TeamA");
-            meld.AddCard(new Card(Suit.Spades, Rank.Ace));       // natural card
-            meld.AddCard(new Card(Suit.Hearts, Rank.Ace));         // natural card
-            meld.AddCard(new Card(Suit.Diamonds, Rank.Two));        // wild card (deuce)
+            meld.AddCard(new Card(Suit.Spades, Rank.Ace));   
+            meld.AddCard(new Card(Suit.Hearts, Rank.Ace));   
+            meld.AddCard(new Card(Suit.Diamonds, Rank.Two));       
             Assert.IsFalse(meld.ValidateMeld(), "Meld using wild cards must contain at least four natural cards.");
         }
 
@@ -49,11 +49,11 @@ public class Tests
         public void ValidateMeld_WithWildCardAndAtLeastFourNaturalCards_ReturnsTrue()
         {
             Meld meld = new Meld("TeamA");
-            meld.AddCard(new Card(Suit.Spades, Rank.Ace));       // natural card (sets meld rank)
-            meld.AddCard(new Card(Suit.Hearts, Rank.Ace));         // natural card
-            meld.AddCard(new Card(Suit.Clubs, Rank.Ace));          // natural card
-            meld.AddCard(new Card(Suit.Diamonds, Rank.Two));       // wild card
-            meld.AddCard(new Card(Suit.Spades, Rank.Ace));         // natural card
+            meld.AddCard(new Card(Suit.Spades, Rank.Ace));
+            meld.AddCard(new Card(Suit.Hearts, Rank.Ace)); 
+            meld.AddCard(new Card(Suit.Clubs, Rank.Ace));   
+            meld.AddCard(new Card(Suit.Diamonds, Rank.Two));
+            meld.AddCard(new Card(Suit.Spades, Rank.Ace)); 
             Assert.IsTrue(meld.ValidateMeld(), "Meld with wild cards and four natural cards should be valid.");
         }
 
@@ -74,10 +74,10 @@ public class Tests
         public void AddCard_MismatchedNaturalCard_ThrowsException()
         {
             Meld meld = new Meld("TeamA");
-            meld.AddCard(new Card(Suit.Spades, Rank.Ace)); // Sets meld rank to Ace.
+            meld.AddCard(new Card(Suit.Spades, Rank.Ace));
             var ex = Assert.Throws<InvalidOperationException>(() =>
             {
-                meld.AddCard(new Card(Suit.Hearts, Rank.King)); // Attempting to add a natural card of a different rank.
+                meld.AddCard(new Card(Suit.Hearts, Rank.King));
             });
             Assert.AreEqual("Natural card rank must match the meld rank Ace.", ex.Message);
         }
@@ -87,7 +87,7 @@ public class Tests
         public void AddCard_ExceedingSevenCards_ThrowsException()
         {
             Meld meld = new Meld("TeamA");
-            // Adding seven valid cards.
+            
             meld.AddCard(new Card(Suit.Spades, Rank.Ace));
             meld.AddCard(new Card(Suit.Hearts, Rank.Ace));
             meld.AddCard(new Card(Suit.Clubs, Rank.Ace));
@@ -96,7 +96,7 @@ public class Tests
             meld.AddCard(new Card(Suit.Hearts, Rank.Ace));
             meld.AddCard(new Card(Suit.Clubs, Rank.Ace));
             
-            // Attempting to add an eighth card should throw an exception.
+            //eighth card
             var ex = Assert.Throws<InvalidOperationException>(() =>
             {
                 meld.AddCard(new Card(Suit.Diamonds, Rank.Ace));
@@ -104,7 +104,7 @@ public class Tests
             Assert.AreEqual("Meld is full (closed pile/book).", ex.Message);
         }
 
-        // Test that the meld is recognized as closed when seven cards have been added.
+        // Test that the meld is closed when there are seven cards
         [Test]
         public void IsClosed_WhenSevenCards_ReturnsTrue()
         {

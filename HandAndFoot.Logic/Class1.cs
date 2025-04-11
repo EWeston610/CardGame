@@ -84,7 +84,7 @@ public class DrawDeck
     {
         List<Card> newDeck = CardDeck.GenerateDeck();
 
-        // Shuffle the new deck
+        // Shuffle the new deck (Not my code)
         for (int i = newDeck.Count - 1; i > 0; i--)
         {
             int j = random.Next(i + 1);
