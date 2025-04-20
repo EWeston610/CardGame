@@ -1,87 +1,153 @@
 ﻿using System;
+using System.Linq;
+using System.Collections.Generic;
 using HandAndFoot.Logic;
 
-namespace HandAndFoot;
-
+namespace HandAndFoot
+{
     class Program
     {
-        static void TupleThingyForTesting(string[] args)
+        static void Main(string[] args)
         {
-            DrawDeck drawDeck = new DrawDeck();
-            List<Card> playerHand = drawDeck.DrawCards(11);
-            Console.WriteLine("Player's Hand:");
-            foreach (Card card in playerHand)
+            Console.WriteLine("Welcome to Hand and Foot!");
+            int numPlayers = PromptInt("Enter number of players (2+): ", 2);
+            var game = new HandAndFootGame(numPlayers);
+
+            int currentPlayer = 0;
+            while (!game.IsRoundOver)
             {
-                Console.WriteLine(card);
-            }
-            Console.WriteLine("\nDrawing additional cards:");
-            for (int i = 0; i < 10; i++)
-            {
-                Console.WriteLine(drawDeck.DrawCard());
+                var player = game.Players[currentPlayer];
+                Console.WriteLine($"\n--- {player.Name}'s Turn ---");
+
+                // Show top of discard pile
+                Console.WriteLine($"Discard Top: {game.DiscardPile.Peek()}");
+
+                // Show hand or foot
+                var pile = player.HasUsedHand ? player.Foot : player.Hand;
+                Console.WriteLine(player.HasUsedHand ? "Your Foot:" : "Your Hand:");
+                DisplayPile(pile);
+
+                // Option to pick up discard pile
+                bool pickUp = PromptYesNo("Pick up discard pile? (y/n): ");
+
+                // Melding phase
+                var newMelds = new List<Meld>();
+                if (PromptYesNo("Do you want to start a new meld? (y/n): "))
+                {
+                    bool moreMelds = true;
+                    while (moreMelds)
+                    {
+                        var meldRank = PromptRank("Select rank for meld (cannot be Three): ", allowThree: false);
+                        var meld = new Meld(meldRank);
+                        Console.WriteLine($"Building meld of {meldRank}...");
+
+                        while (true)
+                        {
+                            // Determine valid cards: matching rank or wild, excluding any Threes
+                            var validIndices = pile
+                                .Select((c, i) => new { c, i })
+                                .Where(x => x.c.Rank == meldRank || x.c.IsWild)
+                                .Where(x => x.c.Rank != Rank.Three)
+                                .Select(x => x.i)
+                                .ToList();
+
+                            if (!validIndices.Any())
+                            {
+                                Console.WriteLine("No more valid cards to add.");
+                                break;
+                            }
+
+                            Console.WriteLine("Select a card to add to meld or 'd' when done:");
+                            foreach (var idx in validIndices)
+                                Console.WriteLine($"[{idx}] {pile[idx]}");
+
+                            var input = Console.ReadLine();
+                            if (input?.Trim().ToLower() == "d") break;
+
+                            if (int.TryParse(input, out int idxSel) && validIndices.Contains(idxSel))
+                            {
+                                var card = pile[idxSel];
+                                try
+                                {
+                                    player.PlayToMeld(card, meld);
+                                    Console.WriteLine($"Added {card} to meld.");
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine($"Cannot add card: {ex.Message}");
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine("Invalid selection; please choose a valid index or 'd'.");
+                            }
+                        }
+
+                        if (!meld.IsValidInitial())
+                            Console.WriteLine("Warning: Meld does not meet initial validity requirements.");
+
+                        newMelds.Add(meld);
+                        moreMelds = PromptYesNo("Start another meld? (y/n): ");
+                    }
+                }
+
+                // Prompt for discard
+                Console.WriteLine("Your remaining cards:");
+                DisplayPile(pile);
+                int discardIndex = PromptInt($"Select card to discard [0-{pile.Count - 1}]: ", 0, pile.Count - 1);
+                var discardCard = pile[discardIndex];
+
+                // Execute turn
+                game.TakeTurn(currentPlayer, newMelds, discardCard, pickUp);
+
+                // Advance to next player
+                currentPlayer = (currentPlayer + 1) % game.Players.Count;
             }
 
-            Console.WriteLine("\n=== Meld Testing Console UI ===");
-            Console.Write("Enter team name for the new meld: ");
-            string teamName = Console.ReadLine();
-            Meld meld = new Meld(teamName);
-            
-            bool exit = false;
-            while (!exit)
+            Console.WriteLine("\n*** Round Over! ***");
+            int netPoints = game.EndRound();
+            Console.WriteLine($"Net points this round: {netPoints}");
+        }
+
+        static void DisplayPile(List<Card> pile)
+        {
+            for (int i = 0; i < pile.Count; i++)
+                Console.WriteLine($"[{i}] {pile[i]}");
+        }
+
+        static int PromptInt(string prompt, int min, int max = int.MaxValue)
+        {
+            while (true)
             {
-                Console.WriteLine("\nSelect an option:");
-                Console.WriteLine("1. Add Card to Meld");
-                Console.WriteLine("2. Validate Meld");
-                Console.WriteLine("3. Show Meld Details");
-                Console.WriteLine("4. Exit");
-                Console.Write("Your choice: ");
-                string choice = Console.ReadLine();
-                switch (choice)
-                {
-                    case "1":
-                        try
-                        {
-                            Console.Write("Enter card suit (Clubs, Diamonds, Hearts, Spades): ");
-                            string suitInput = Console.ReadLine();
-                            if (!Enum.TryParse(typeof(Suit), suitInput, true, out var suitObj))
-                            {
-                                Console.WriteLine("Invalid suit input.");
-                                break;
-                            }
-                            Suit suit = (Suit)suitObj;
-                            
-                            Console.Write("Enter card rank (e.g., Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King, Ace, Joker): ");
-                            string rankInput = Console.ReadLine();
-                            if (!Enum.TryParse(typeof(Rank), rankInput, true, out var rankObj))
-                            {
-                                Console.WriteLine("Invalid rank input.");
-                                break;
-                            }
-                            Rank rank = (Rank)rankObj;
-                            
-                            Card card = new Card(suit, rank);
-                            meld.AddCard(card);
-                            Console.WriteLine("Card added successfully.");
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine("Error adding card: " + ex.Message);
-                        }
-                        break;
-                    case "2":
-                        bool isValid = meld.ValidateMeld();
-                        Console.WriteLine("Meld is " + (isValid ? "Valid" : "Invalid"));
-                        break;
-                    case "3":
-                        Console.WriteLine("Current Meld Details:");
-                        Console.WriteLine(meld.ToString());
-                        break;
-                    case "4":
-                        exit = true;
-                        break;
-                    default:
-                        Console.WriteLine("Invalid option. Please choose again.");
-                        break;
-                }
+                Console.Write(prompt);
+                if (int.TryParse(Console.ReadLine(), out int val) && val >= min && val <= max)
+                    return val;
+                Console.WriteLine($"Please enter a number between {min} and {max}.");
             }
         }
+
+        static bool PromptYesNo(string prompt)
+        {
+            while (true)
+            {
+                Console.Write(prompt);
+                var key = Console.ReadKey(intercept: true);
+                Console.WriteLine();
+                if (key.KeyChar == 'y' || key.KeyChar == 'Y') return true;
+                if (key.KeyChar == 'n' || key.KeyChar == 'N') return false;
+            }
+        }
+
+        static Rank PromptRank(string prompt, bool allowThree)
+        {
+            var ranks = Enum.GetValues<Rank>()
+                .Cast<Rank>()
+                .Where(r => allowThree || r != Rank.Three)
+                .ToList();
+            for (int i = 0; i < ranks.Count; i++)
+                Console.WriteLine($"[{i}] {ranks[i]}");
+            int choice = PromptInt(prompt, 0, ranks.Count - 1);
+            return ranks[choice];
+        }
     }
+}

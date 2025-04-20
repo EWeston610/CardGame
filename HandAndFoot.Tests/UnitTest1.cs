@@ -1,121 +1,138 @@
 namespace HandAndFoot.Tests;
-using HandAndFoot.Logic;
+using HandAndFoot;
 
-public class Tests
+using NUnit.Framework;
+using HandAndFoot.Logic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+
+public class GameInitializationTests
 {
-    [SetUp]
-    public void Setup()
+    [Test]
+    public void NewDeckHasExpectedCount()
     {
+        var deck = new Deck(decks: 5);
+        Assert.AreEqual(5 * 54, deck.Count);
     }
 
     [Test]
-    public void Test1()
+    public void ShuffleDoesNotChangeCount()
     {
-        Assert.Pass();
+        var deck = new Deck();
+        var original = deck.Count;
+        deck.Shuffle();
+        Assert.AreEqual(original, deck.Count);
     }
-     [Test]
-        public void ValidateMeld_WithLessThanThreeCards_ReturnsFalse()
-        {
-            Meld meld = new Meld("TeamA");
-            meld.AddCard(new Card(Suit.Spades, Rank.Ace));
-            meld.AddCard(new Card(Suit.Hearts, Rank.Ace));
-            Assert.IsFalse(meld.ValidateMeld(), "Meld with fewer than 3 cards should be invalid.");
-        }
-
-        // Test that a meld with three natural cards is valid.
-        [Test]
-        public void ValidateMeld_WithThreeNaturalCards_ReturnsTrue()
-        {
-            Meld meld = new Meld("TeamA");
-            meld.AddCard(new Card(Suit.Spades, Rank.Ace));
-            meld.AddCard(new Card(Suit.Hearts, Rank.Ace));
-            meld.AddCard(new Card(Suit.Clubs, Rank.Ace));
-            Assert.IsTrue(meld.ValidateMeld(), "Meld with exactly three natural cards should be valid.");
-        }
-
-        // Test that a meld containing wild cards but with less than four natural cards is invalid.
-        [Test]
-        public void ValidateMeld_WithWildCard_ButLessThanFourNaturalCards_ReturnsFalse()
-        {
-            Meld meld = new Meld("TeamA");
-            meld.AddCard(new Card(Suit.Spades, Rank.Ace));       // natural card
-            meld.AddCard(new Card(Suit.Hearts, Rank.Ace));         // natural card
-            meld.AddCard(new Card(Suit.Diamonds, Rank.Two));        // wild card (deuce)
-            Assert.IsFalse(meld.ValidateMeld(), "Meld using wild cards must contain at least four natural cards.");
-        }
-
-        // Test that a meld containing wild cards with at least four natural cards is valid.
-        [Test]
-        public void ValidateMeld_WithWildCardAndAtLeastFourNaturalCards_ReturnsTrue()
-        {
-            Meld meld = new Meld("TeamA");
-            meld.AddCard(new Card(Suit.Spades, Rank.Ace));       // natural card (sets meld rank)
-            meld.AddCard(new Card(Suit.Hearts, Rank.Ace));         // natural card
-            meld.AddCard(new Card(Suit.Clubs, Rank.Ace));          // natural card
-            meld.AddCard(new Card(Suit.Diamonds, Rank.Two));       // wild card
-            meld.AddCard(new Card(Suit.Spades, Rank.Ace));         // natural card
-            Assert.IsTrue(meld.ValidateMeld(), "Meld with wild cards and four natural cards should be valid.");
-        }
-
-        // Test that adding a card of rank Three throws an exception.
-        [Test]
-        public void AddCard_DisallowsRankThree_ThrowsException()
-        {
-            Meld meld = new Meld("TeamA");
-            var ex = Assert.Throws<InvalidOperationException>(() =>
-            {
-                meld.AddCard(new Card(Suit.Spades, Rank.Three));
-            });
-            Assert.AreEqual("Cannot add Threes to a meld.", ex.Message);
-        }
-
-        // Test that adding a natural card with a rank different from the established meld rank throws an exception.
-        [Test]
-        public void AddCard_MismatchedNaturalCard_ThrowsException()
-        {
-            Meld meld = new Meld("TeamA");
-            meld.AddCard(new Card(Suit.Spades, Rank.Ace)); // Sets meld rank to Ace.
-            var ex = Assert.Throws<InvalidOperationException>(() =>
-            {
-                meld.AddCard(new Card(Suit.Hearts, Rank.King)); // Attempting to add a natural card of a different rank.
-            });
-            Assert.AreEqual("Natural card rank must match the meld rank Ace.", ex.Message);
-        }
-
-        // Test that adding more than 7 cards causes an exception.
-        [Test]
-        public void AddCard_ExceedingSevenCards_ThrowsException()
-        {
-            Meld meld = new Meld("TeamA");
-            // Adding seven valid cards.
-            meld.AddCard(new Card(Suit.Spades, Rank.Ace));
-            meld.AddCard(new Card(Suit.Hearts, Rank.Ace));
-            meld.AddCard(new Card(Suit.Clubs, Rank.Ace));
-            meld.AddCard(new Card(Suit.Diamonds, Rank.Ace));
-            meld.AddCard(new Card(Suit.Spades, Rank.Ace));
-            meld.AddCard(new Card(Suit.Hearts, Rank.Ace));
-            meld.AddCard(new Card(Suit.Clubs, Rank.Ace));
-            
-            // Attempting to add an eighth card should throw an exception.
-            var ex = Assert.Throws<InvalidOperationException>(() =>
-            {
-                meld.AddCard(new Card(Suit.Diamonds, Rank.Ace));
-            });
-            Assert.AreEqual("Meld is full (closed pile/book).", ex.Message);
-        }
-
-        // Test that the meld is recognized as closed when seven cards have been added.
-        [Test]
-        public void IsClosed_WhenSevenCards_ReturnsTrue()
-        {
-            Meld meld = new Meld("TeamA");
-            meld.AddCard(new Card(Suit.Spades, Rank.Ace));
-            meld.AddCard(new Card(Suit.Hearts, Rank.Ace));
-            meld.AddCard(new Card(Suit.Clubs, Rank.Ace));
-            meld.AddCard(new Card(Suit.Diamonds, Rank.Ace));
-            meld.AddCard(new Card(Suit.Spades, Rank.Ace));
-            meld.AddCard(new Card(Suit.Hearts, Rank.Ace));
-            meld.AddCard(new Card(Suit.Clubs, Rank.Ace));
-            Assert.IsTrue(meld.IsClosed, "Meld should be marked as closed when it contains 7 cards.");
-        }
 }
+
+public class MeldValidationTests
+{
+    [Test]
+    public void ValidCleanMeld()
+    {
+        var meld = new Meld(Rank.Nine);
+        Enumerable.Range(0, 3).ToList()
+                  .ForEach(_ => meld.Add(new Card(Suit.Clubs, Rank.Nine)));
+        Assert.IsTrue(meld.IsValidInitial());
+        Assert.IsTrue(meld.IsClean);
+    }
+
+    [Test]
+    public void InvalidDirtyMeldFails()
+    {
+        var meld = new Meld(Rank.King);
+        meld.Add(new Card(Suit.Spades, Rank.King));
+        meld.Add(new Card(Suit.Joker, Rank.Joker));
+        meld.Add(new Card(Suit.Joker, Rank.Deuce));
+        Assert.IsFalse(meld.IsValidInitial());
+    }
+}
+
+public class PersistenceTests
+{
+    private const string Path = "gamestate.json";
+
+    [Test]
+    public async Task SaveAndLoad_RestoresGame()
+    {
+        var game = new HandAndFootGame(numPlayers: 2);
+        var repo = new JsonGameStateRepository();
+        await repo.SaveAsync(game, Path);
+
+        Assert.IsTrue(File.Exists(Path));
+        var loaded = await repo.LoadAsync(Path);
+        Assert.IsNotNull(loaded);
+        File.Delete(Path);
+    }
+}
+public class DeckTests
+{
+    [Test]
+    public void Draw_AllCards_ThenThrows()
+    {
+        var deck = new Deck(decks: 1);
+        int count = deck.Count;
+
+        for (int i = 0; i < count; i++)
+            Assert.DoesNotThrow(() => _ = deck.Draw());
+
+        Assert.Throws<InvalidOperationException>(() => deck.Draw());
+    }
+}
+
+public class MeldRuleTests
+{
+    [Test]
+    public void CannotAddThreeToMeld()
+    {
+        var meld = new Meld(Rank.Five);
+        var three = new Card(Suit.Diamonds, Rank.Three);
+        Assert.Throws<InvalidOperationException>(() => meld.Add(three));
+    }
+
+    [Test]
+    public void CleanMeldIsValidAndClean()
+    {
+        var meld = new Meld(Rank.Nine);
+        for (int i = 0; i < 3; i++)
+            meld.Add(new Card(Suit.Clubs, Rank.Nine));
+
+        Assert.IsTrue(meld.IsValidInitial());
+        Assert.IsTrue(meld.IsClean);
+    }
+
+    [Test]
+    public void DirtyMeld()
+    {
+        var meld = new Meld(Rank.Eight);
+        for (int i = 0; i < 4; i++)
+            meld.Add(new Card(Suit.Hearts, Rank.Eight));
+        meld.Add(new Card(Suit.Joker, Rank.Joker));
+
+        Assert.IsTrue(meld.IsValidInitial());
+        Assert.IsFalse(meld.IsClean);
+    }
+
+    [Test]
+    public void AllWildMeldIsInvalid()
+    {
+        var meld = new Meld(Rank.King);
+        for (int i = 0; i < 3; i++)
+            meld.Add(new Card(Suit.Joker, Rank.Joker));
+
+        Assert.IsFalse(meld.IsValidInitial());
+    }
+
+    [Test]
+    public void MeldBecomesClosedAtSeven()
+    {
+        var meld = new Meld(Rank.Six);
+        for (int i = 0; i < 7; i++)
+            meld.Add(new Card(Suit.Spades, Rank.Six));
+
+        Assert.IsTrue(meld.IsClosed);
+        Assert.Throws<InvalidOperationException>(() => meld.Add(new Card(Suit.Spades, Rank.Six)));
+    }
+}
+
